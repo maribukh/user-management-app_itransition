@@ -80,6 +80,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
+// Добавлено async
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
