@@ -4,9 +4,6 @@ import {
   LockClosedIcon,
   TrashIcon,
   LockOpenIcon,
-  UserCircleIcon,
-  EnvelopeIcon,
-  KeyIcon,
 } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:3001";

@@ -3,17 +3,28 @@ import React, { useState, useEffect } from "react";
 
 const API_URL = "http://localhost:3001";
 
+interface ApiResponse {
+  message: string;
+  token?: string;
+}
+
+interface LocationState {
+  message?: string;
+}
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (location.state?.message) {
-      setError(location.state.message);
-      navigate("/", { replace: true });
+    const state = location.state as LocationState;
+    if (state?.message) {
+      setError(state.message);
+      navigate("/", { replace: true, state: {} });
     }
   }, [location, navigate]);
 
@@ -27,7 +38,7 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await response.json();
+      const data: ApiResponse = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
