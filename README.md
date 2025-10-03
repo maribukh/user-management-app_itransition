@@ -1,73 +1,123 @@
-# React + TypeScript + Vite
+User Management Web Application
+This is a full-stack web application for managing user registration, authentication, and administration, built as a solution for Task #5. The application features a React frontend with TypeScript and a Node.js/Express backend with a PostgreSQL database.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+✨ Features
+User Registration: New users can create an account.
 
-Currently, two official plugins are available:
+Email Verification: A verification email is sent upon registration using Nodemailer and Mailtrap for testing.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+User Login: Authenticated users receive a JWT (JSON Web Token) to access protected routes.
 
-## React Compiler
+User Management Dashboard:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+View a list of all registered users with their status, registration date, and last login time.
 
-## Expanding the ESLint configuration
+Sortable data in the table.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Multiple user selection with checkboxes ("Select All" is supported).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Toolbar actions:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Block selected users.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Unblock selected users.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Delete selected users.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Delete all unverified users.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Security:
+
+Passwords are encrypted using bcrypt.
+
+Protected routes on the backend require a valid JWT.
+
+Blocked or deleted users are automatically logged out and redirected if they try to perform an action.
+
+🛠️ Tech Stack
+Frontend:
+
+React
+
+TypeScript
+
+Vite
+
+React Router
+
+Tailwind CSS
+
+Heroicons (for icons)
+
+Backend:
+
+Node.js
+
+Express.js
+
+PostgreSQL
+
+node-postgres (pg) for database connection
+
+jsonwebtoken (JWT) for authentication
+
+bcrypt for password hashing
+
+nodemailer for sending emails
+
+🚀 Getting Started
+To run this project locally, you will need to run the frontend and backend servers separately.
+
+Prerequisites
+Node.js (v18 or later)
+
+PostgreSQL installed and running
+
+A Mailtrap account for email testing
+
+1. Backend Setup
+Navigate to the backend directory:
+
+cd backend-app 
+
+Install dependencies:
+
+npm install
+
+Set up the database:
+
+Create a PostgreSQL database named user_management_db.
+
+Run the SQL commands from the database.sql file to create the users table and necessary types/indexes.
+
+Configure Environment Variables:
+
+Update the database connection details in server.js if they differ from the defaults.
+
+Add your Mailtrap credentials in the nodemailer transporter configuration in server.js.
+
+Run the server:
+
+npm start
+
+The backend server will be running on http://localhost:3001.
+
+2. Frontend Setup
+Navigate to the frontend directory (the root of this repository).
+
+Install dependencies:
+
+npm install
+
+Run the development server:
+
+npm run dev
+
+The application will be available at http://localhost:5173.
+
+下一步 (Next Steps)
+The final step for this project is to deploy it to make it publicly accessible. The recommended services are:
+
+Backend: Render
+
+Frontend: Vercel
