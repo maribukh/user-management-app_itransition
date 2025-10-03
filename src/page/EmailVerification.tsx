@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { API_URL } from "../config";
+
+const API_URL = "http://localhost:3001";
 
 export default function EmailVerification() {
   const [message, setMessage] = useState(
@@ -20,7 +21,7 @@ export default function EmailVerification() {
 
       try {
         const response = await fetch(`${API_URL}/api/verify-email/${token}`);
-        const data = await response.json(); 
+        const data = await response.json();
 
         if (!response.ok) {
           throw new Error(data.message || "Verification failed.");

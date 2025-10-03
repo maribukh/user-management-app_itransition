@@ -18,7 +18,7 @@ const pool = new Pool({
   host: "localhost",
   database: "user_management_db",
   password: "123",
-  port: 542,
+  port: 5432,
 });
 
 const transporter = nodemailer.createTransport({
@@ -41,14 +41,9 @@ const authenticateToken = async (req, res, next) => {
       decoded.id,
     ]);
     const user = userResult.rows[0];
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    if (user.status === "blocked") {
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.status === "blocked")
       return res.status(403).json({ message: "User is blocked" });
-    }
-
     req.user = user;
     next();
   } catch (err) {
@@ -75,21 +70,28 @@ app.post("/api/register", async (req, res) => {
         .status(400)
         .json({ message: "User with this email already exists" });
     }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    await pool.query(
-      "INSERT INTO users (name, email, password_hash, verification_token) VALUES ($1, $2, $3, $4)",
-      [name, email, passwordHash, verificationToken]
-    );
+    const newUserQuery = `
+      INSERT INTO users (name, email, password_hash, verification_token) 
+      VALUES ($1, $2, $3, $4) RETURNING id
+    `;
+    await pool.query(newUserQuery, [
+      name,
+      email,
+      passwordHash,
+      verificationToken,
+    ]);
 
     const verificationLink = `http://localhost:5173/verify-email/${verificationToken}`;
 
     await transporter.sendMail({
-      from: '"User Management App" <from@example.com>',
+      from: '"Your App Name" <your_email@example.com>',
       to: email,
-      subject: "Verify Your Email Address",
-      html: `<b>Please click the following link to verify your email:</b><br/><a href="${verificationLink}">${verificationLink}</a>`,
+      subject: "Please verify your email address",
+      html: `<b>Please click the following link to verify your email:</b> <a href="${verificationLink}">${verificationLink}</a>`,
     });
 
     res.status(201).json({
@@ -105,26 +107,25 @@ app.post("/api/register", async (req, res) => {
 app.get("/api/verify-email/:token", async (req, res) => {
   try {
     const { token } = req.params;
-    const userResult = await pool.query(
+    const result = await pool.query(
       "SELECT * FROM users WHERE verification_token = $1",
       [token]
     );
-    const user = userResult.rows[0];
+    const user = result.rows[0];
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "Invalid or expired verification token." });
+      return res.status(400).json({ message: "Invalid verification token." });
     }
 
     await pool.query(
       "UPDATE users SET status = 'active', verification_token = NULL WHERE id = $1",
       [user.id]
     );
-    res.status(200).json({ message: "Email Verified Successfully!" });
+
+    res.status(200).json({ message: "Email verified successfully." });
   } catch (error) {
     console.error("Error during email verification:", error);
-    res.status(500).json({ message: "An internal server error occurred." });
+    res.status(500).json({ message: "Internal server error." });
   }
 });
 
@@ -142,21 +143,26 @@ app.post("/api/login", async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
     if (user.status === "blocked") {
       return res
         .status(403)
         .json({ message: "User is blocked and cannot log in" });
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
     await pool.query("UPDATE users SET last_login_time = NOW() WHERE id = $1", [
       user.id,
     ]);
+
     const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, {
       expiresIn: "1h",
     });
+
     res.status(200).json({ message: "Login successful", token });
   } catch (error) {
     console.error("Error during login:", error);
