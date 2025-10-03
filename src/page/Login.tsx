@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import React, { useState, useEffect } from "react";
+import BackgroundImage from "../../src/assets/backgorundImg.jpg";
 
 const API_URL = "http://localhost:3001";
 
@@ -64,7 +65,7 @@ export default function Login() {
         <div className="hidden md:block w-1/2">
           <img
             className="w-full h-full object-cover"
-            src="https://i.imgur.com/EDx333b.jpg"
+            src={BackgroundImage}
             alt="Decorative background"
           />
         </div>
