@@ -18,16 +18,15 @@ const pool = new Pool({
   host: "localhost",
   database: "user_management_db",
   password: "123",
-  port: 5432,
+  port: 542,
 });
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.example.com",
-  port: 587,
-  secure: false,
+  host: "sandbox.smtp.mailtrap.io",
+  port: 2525,
   auth: {
-    user: "your_email@example.com",
-    pass: "your_email_password",
+    user: "32716a422f78e3",
+    pass: "5ed966fc266fa9",
   },
 });
 
@@ -35,15 +34,21 @@ const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (token == null) return res.sendStatus(401);
+
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
     const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
       decoded.id,
     ]);
     const user = userResult.rows[0];
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.status === "blocked")
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.status === "blocked") {
       return res.status(403).json({ message: "User is blocked" });
+    }
+
     req.user = user;
     next();
   } catch (err) {
@@ -70,36 +75,27 @@ app.post("/api/register", async (req, res) => {
         .status(400)
         .json({ message: "User with this email already exists" });
     }
-
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    const newUserQuery = `
-      INSERT INTO users (name, email, password_hash, verification_token) 
-      VALUES ($1, $2, $3, $4) RETURNING id
-    `;
-    await pool.query(newUserQuery, [
-      name,
-      email,
-      passwordHash,
-      verificationToken,
-    ]);
+    await pool.query(
+      "INSERT INTO users (name, email, password_hash, verification_token) VALUES ($1, $2, $3, $4)",
+      [name, email, passwordHash, verificationToken]
+    );
 
     const verificationLink = `http://localhost:5173/verify-email/${verificationToken}`;
 
     await transporter.sendMail({
-      from: '"Your App Name" <your_email@example.com>',
+      from: '"User Management App" <from@example.com>',
       to: email,
-      subject: "Please verify your email address",
-      html: `<b>Please click the following link to verify your email:</b> <a href="${verificationLink}">${verificationLink}</a>`,
+      subject: "Verify Your Email Address",
+      html: `<b>Please click the following link to verify your email:</b><br/><a href="${verificationLink}">${verificationLink}</a>`,
     });
 
-    res
-      .status(201)
-      .json({
-        message:
-          "Registration successful. Please check your email to verify your account.",
-      });
+    res.status(201).json({
+      message:
+        "Registration successful. Please check your email to verify your account.",
+    });
   } catch (error) {
     console.error("Error during registration:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -109,25 +105,26 @@ app.post("/api/register", async (req, res) => {
 app.get("/api/verify-email/:token", async (req, res) => {
   try {
     const { token } = req.params;
-    const result = await pool.query(
+    const userResult = await pool.query(
       "SELECT * FROM users WHERE verification_token = $1",
       [token]
     );
-    const user = result.rows[0];
+    const user = userResult.rows[0];
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid verification token." });
+      return res
+        .status(404)
+        .json({ message: "Invalid or expired verification token." });
     }
 
     await pool.query(
       "UPDATE users SET status = 'active', verification_token = NULL WHERE id = $1",
       [user.id]
     );
-
-    res.status(200).json({ message: "Email verified successfully." });
+    res.status(200).json({ message: "Email Verified Successfully!" });
   } catch (error) {
     console.error("Error during email verification:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 });
 
@@ -145,28 +142,21 @@ app.post("/api/login", async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
     if (user.status === "blocked") {
       return res
         .status(403)
         .json({ message: "User is blocked and cannot log in" });
     }
-
-    // Я УБРАЛ ПРОВЕРКУ НА 'unverified' ОТСЮДА
-
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
     await pool.query("UPDATE users SET last_login_time = NOW() WHERE id = $1", [
       user.id,
     ]);
-
     const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, {
       expiresIn: "1h",
     });
-
     res.status(200).json({ message: "Login successful", token });
   } catch (error) {
     console.error("Error during login:", error);
@@ -177,7 +167,7 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/users", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, email, registration_time, last_login_time, status FROM users ORDER BY last_login_time DESC NULLS LAST"
+      "SELECT id, name, email, registration_time, last_login_time, status FROM users ORDER BY id ASC"
     );
     res.status(200).json(result.rows);
   } catch (error) {
@@ -217,6 +207,23 @@ app.post("/api/users/delete", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+app.post(
+  "/api/users/delete-unverified",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const query = "DELETE FROM users WHERE status = 'unverified'";
+      const result = await pool.query(query);
+      res.status(200).json({
+        message: `${result.rowCount} unverified users deleted successfully`,
+      });
+    } catch (error) {
+      console.error("Error deleting unverified users:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
 
 app.listen(3001, () => {
   console.log("Server is running on http://localhost:3001");

@@ -1,7 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 
+
 const API_URL = "http://localhost:3001";
+
+
+interface ApiResponse {
+  message: string;
+  token?: string;
+}
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -13,20 +20,24 @@ export default function Register() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
-
     try {
       const response = await fetch(`${API_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
-      const data = await response.json();
-
+      const data: ApiResponse = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Registration failed");
       }
 
-      navigate("/");
+
+      navigate("/", {
+        state: {
+          message:
+            "Registration successful! Please check your email to verify your account.",
+        },
+      });
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);

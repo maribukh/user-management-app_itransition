@@ -4,6 +4,7 @@ import {
   LockClosedIcon,
   TrashIcon,
   LockOpenIcon,
+  UserMinusIcon,
 } from "@heroicons/react/24/solid";
 
 const API_URL = "http://localhost:3001";
@@ -23,24 +24,23 @@ export default function UsersTable() {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  // Helper function to handle authenticated fetch requests
+  const showTemporaryMessage = (msg: string) => {
+    setMessage(msg);
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
+  };
+
   const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
     const token = localStorage.getItem("token");
-
     const headers = {
       ...options.headers,
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
-
     const response = await fetch(url, { ...options, headers });
 
-    // If token is invalid or user is blocked/deleted, redirect to login
-    if (
-      response.status === 401 ||
-      response.status === 403 ||
-      response.status === 404
-    ) {
+    if ([401, 403, 404].includes(response.status)) {
       localStorage.removeItem("token");
       navigate("/", {
         state: {
@@ -50,7 +50,6 @@ export default function UsersTable() {
       });
       throw new Error("Authentication failed");
     }
-
     return response;
   };
 
@@ -58,12 +57,11 @@ export default function UsersTable() {
     try {
       const response = await authenticatedFetch(`${API_URL}/api/users`);
       if (!response.ok) throw new Error("Failed to fetch");
-
       const data: User[] = await response.json();
       setUsers(data);
     } catch (error) {
       if ((error as Error).message !== "Authentication failed") {
-        setMessage("Failed to load users");
+        showTemporaryMessage("Failed to load users");
       }
     }
   };
@@ -90,8 +88,7 @@ export default function UsersTable() {
   const handleUserAction = async (
     url: string,
     body: object,
-    successMessage: string,
-    errorMessage: string
+    successMessage: string
   ) => {
     try {
       const response = await authenticatedFetch(url, {
@@ -99,14 +96,17 @@ export default function UsersTable() {
         body: JSON.stringify(body),
       });
 
-      if (!response.ok) throw new Error(errorMessage);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Action failed");
+      }
 
-      setMessage(successMessage);
-      fetchUsers(); // Refresh users list
+      showTemporaryMessage(successMessage);
+      fetchUsers();
       setSelectedUsers(new Set());
     } catch (error) {
       if ((error as Error).message !== "Authentication failed") {
-        setMessage(errorMessage);
+        showTemporaryMessage((error as Error).message);
       }
     }
   };
@@ -115,8 +115,7 @@ export default function UsersTable() {
     handleUserAction(
       `${API_URL}/api/users/update-status`,
       { userIds: Array.from(selectedUsers), status: "blocked" },
-      "Users have been blocked.",
-      "Error blocking users."
+      "Users have been blocked."
     );
   };
 
@@ -124,8 +123,7 @@ export default function UsersTable() {
     handleUserAction(
       `${API_URL}/api/users/update-status`,
       { userIds: Array.from(selectedUsers), status: "active" },
-      "Users have been unblocked.",
-      "Error unblocking users."
+      "Users have been unblocked."
     );
   };
 
@@ -133,8 +131,15 @@ export default function UsersTable() {
     handleUserAction(
       `${API_URL}/api/users/delete`,
       { userIds: Array.from(selectedUsers) },
-      "Users have been deleted.",
-      "Error deleting users."
+      "Users have been deleted."
+    );
+  };
+
+  const handleDeleteUnverified = () => {
+    handleUserAction(
+      `${API_URL}/api/users/delete-unverified`,
+      {},
+      "Unverified users have been deleted."
     );
   };
 
@@ -157,7 +162,7 @@ export default function UsersTable() {
         </header>
 
         {message && (
-          <p className="bg-blue-100 text-blue-800 p-3 rounded-lg mb-4">
+          <p className="bg-blue-100 text-blue-800 p-3 rounded-lg mb-4 animate-pulse">
             {message}
           </p>
         )}
@@ -183,6 +188,13 @@ export default function UsersTable() {
             title="Delete selected users"
           >
             <TrashIcon className="h-6 w-6" />
+          </button>
+          <button
+            onClick={handleDeleteUnverified}
+            className="p-2 text-gray-500 hover:text-yellow-600 rounded-full hover:bg-gray-100 transition-colors"
+            title="Delete all unverified users"
+          >
+            <UserMinusIcon className="h-6 w-6" />
           </button>
         </div>
 
