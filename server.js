@@ -21,6 +21,7 @@ const pool = new Pool({
   port: 5432,
 });
 
+// ИСПРАВЛЕНО: Добавлены ваши реальные учетные данные от Mailtrap
 const transporter = nodemailer.createTransport({
   host: "sandbox.smtp.mailtrap.io",
   port: 2525,
@@ -34,7 +35,6 @@ const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (token == null) return res.sendStatus(401);
-
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
     const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
@@ -214,6 +214,7 @@ app.post("/api/users/delete", authenticateToken, async (req, res) => {
   }
 });
 
+// ДОБАВЛЕНО: Новый маршрут для удаления неверифицированных
 app.post(
   "/api/users/delete-unverified",
   authenticateToken,
