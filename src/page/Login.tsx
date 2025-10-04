@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import BackgroundImage from "../../src/assets/backgorundImg.jpg";
 
-const API_URL = "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface ApiResponse {
   message: string;

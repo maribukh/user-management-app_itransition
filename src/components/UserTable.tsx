@@ -7,7 +7,7 @@ import {
   UserMinusIcon,
 } from "@heroicons/react/24/solid";
 
-const API_URL = "http://localhost:3001";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface User {
   id: number;

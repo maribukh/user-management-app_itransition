@@ -5,28 +5,38 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import "dotenv/config";
 
 const { Pool } = pkg;
 const app = express();
-const SECRET_KEY = "your_super_secret_key";
 
-app.use(cors());
+const SECRET_KEY = process.env.SECRET_KEY || "your_super_secret_key";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const DATABASE_URL = process.env.DATABASE_URL;
+
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+  })
+);
 app.use(express.json());
 
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is not set.");
+}
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "user_management_db",
-  password: "123",
-  port: 5432,
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 const transporter = nodemailer.createTransport({
   host: "sandbox.smtp.mailtrap.io",
   port: 2525,
   auth: {
-    user: "32716a422f78e3",
-    pass: "5ed966fc266fa9",
+    user: process.env.MAILTRAP_USER || "32716a422f78e3",
+    pass: process.env.MAILTRAP_PASS || "5ed966fc266fa9",
   },
 });
 
@@ -34,15 +44,20 @@ const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (token == null) return res.sendStatus(401);
+
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
     const userResult = await pool.query("SELECT * FROM users WHERE id = $1", [
       decoded.id,
     ]);
     const user = userResult.rows[0];
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.status === "blocked")
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.status === "blocked") {
       return res.status(403).json({ message: "User is blocked" });
+    }
     req.user = user;
     next();
   } catch (err) {
@@ -59,17 +74,8 @@ app.post("/api/register", async (req, res) => {
   if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
-  try {
-    const existingUser = await pool.query(
-      "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
-      [email]
-    );
-    if (existingUser.rows.length > 0) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists" });
-    }
 
+  try {
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
@@ -84,10 +90,10 @@ app.post("/api/register", async (req, res) => {
       verificationToken,
     ]);
 
-    const verificationLink = `http://localhost:5173/verify-email/${verificationToken}`;
+    const verificationLink = `${FRONTEND_URL}/verify-email/${verificationToken}`;
 
     await transporter.sendMail({
-      from: '"Your App Name" <your_email@example.com>',
+      from: '"Task 5 App" <no-reply@task5.com>',
       to: email,
       subject: "Please verify your email address",
       html: `<b>Please click the following link to verify your email:</b> <a href="${verificationLink}">${verificationLink}</a>`,
@@ -99,6 +105,11 @@ app.post("/api/register", async (req, res) => {
     });
   } catch (error) {
     console.error("Error during registration:", error);
+    if (error.code === "23505") {
+      return res
+        .status(400)
+        .json({ message: "User with this email already exists" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -133,20 +144,28 @@ app.post("/api/login", async (req, res) => {
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
   }
+
   try {
     const result = await pool.query(
       "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
       [email]
     );
     const user = result.rows[0];
+
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    if (user.status === "unverified") {
+      return res
+        .status(403)
+        .json({ message: "Please verify your email before logging in." });
     }
 
     if (user.status === "blocked") {
       return res
         .status(403)
-        .json({ message: "User is blocked and cannot log in" });
+        .json({ message: "Your account has been blocked." });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
@@ -188,6 +207,7 @@ app.post("/api/users/update-status", authenticateToken, async (req, res) => {
       .status(400)
       .json({ message: "User IDs and status are required" });
   }
+
   try {
     const query = "UPDATE users SET status = $1 WHERE id = ANY($2::int[])";
     await pool.query(query, [status, userIds]);
@@ -203,6 +223,7 @@ app.post("/api/users/delete", authenticateToken, async (req, res) => {
   if (!userIds || !userIds.length) {
     return res.status(400).json({ message: "User IDs are required" });
   }
+
   try {
     const query = "DELETE FROM users WHERE id = ANY($1::int[])";
     await pool.query(query, [userIds]);
@@ -230,6 +251,7 @@ app.post(
   }
 );
 
-app.listen(3001, () => {
-  console.log("Server is running on http://localhost:3001");
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
