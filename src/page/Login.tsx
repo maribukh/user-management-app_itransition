@@ -17,14 +17,21 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     const state = location.state as LocationState;
     if (state?.message) {
-      setError(state.message);
+      if (
+        state.message.includes("successful") ||
+        state.message.includes("verified")
+      ) {
+        setSuccessMessage(state.message);
+      } else {
+        setError(state.message);
+      }
       navigate("/", { replace: true, state: {} });
     }
   }, [location, navigate]);
@@ -32,6 +39,7 @@ export default function Login() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setSuccessMessage(""); 
 
     try {
       const response = await fetch(`${API_URL}/api/login`, {
@@ -79,6 +87,12 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {successMessage && (
+              <p className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-lg">
+                {successMessage}
+              </p>
+            )}
+
             {error && (
               <p className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
                 {error}
