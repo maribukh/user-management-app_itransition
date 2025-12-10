@@ -1,123 +1,77 @@
-User Management Web Application
-This is a full-stack web application for managing user registration, authentication, and administration, built as a solution for Task #5. The application features a React frontend with TypeScript and a Node.js/Express backend with a PostgreSQL database.
+# User Management System
 
-✨ Features
-User Registration: New users can create an account.
+![Project Status](https://img.shields.io/badge/Status-Completed-success?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
-Email Verification: A verification email is sent upon registration using Nodemailer and Mailtrap for testing.
+> A full-stack web application for user authentication and administrative management. Built with **React** and **Node.js**, featuring robust security mechanisms and a responsive UI styled with **Tailwind CSS**.
 
-User Login: Authenticated users receive a JWT (JSON Web Token) to access protected routes.
+---
 
-User Management Dashboard:
+## Live Demo
 
-View a list of all registered users with their status, registration date, and last login time.
+| Component | Status | Link |
+|-----------|--------|------|
+| **Frontend** | Online | [Open App on Render](https://user-management-app-itransition-1.onrender.com/) |
+| **Backend** | Online | [API on Render](https://user-management-backend-c6r6.onrender.com/) |
 
-Sortable data in the table.
+> *Note: Since the backend is hosted on Render (Free Tier), the first request might take 30-60 seconds to wake up the server.*
 
-Multiple user selection with checkboxes ("Select All" is supported).
+---
 
-Toolbar actions:
+## Screenshots
 
-Block selected users.
+*(Вставь сюда ссылку на скриншот, например из папки assets, или удали эту строку, если скриншота пока нет)*
+`![App Dashboard](./client/src/assets/preview.png)`
 
-Unblock selected users.
+---
 
-Delete selected users.
+## Key Features
 
-Delete all unverified users.
+This project demonstrates core Full-Stack capabilities, focusing on security and state management:
 
-Security:
+*   **Authentication:** Secure Registration and Login flow.
+*   **User Management:**
+    *   **Block/Unblock:** Instantly revoke access. Blocked users are forcefully logged out.
+    *   **Delete:** Permanent removal of user accounts.
+    *   **Bulk Actions:** Select multiple users to update their status simultaneously.
+*   **Security:** Route protection (Protected Routes) and session validation.
+*   **Responsive Design:** Fully adaptive UI built with Tailwind CSS.
 
-Passwords are encrypted using bcrypt.
+---
 
-Protected routes on the backend require a valid JWT.
+## Tech Stack
 
-Blocked or deleted users are automatically logged out and redirected if they try to perform an action.
+### **Frontend**
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 
-🛠️ Tech Stack
-Frontend:
+### **Backend**
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-00000F?style=for-the-badge&logo=mysql&logoColor=white)
 
-React
+<div align="center">
+<sub>Built with ❤️ during iTransition Internship</sub>
+</div>
+---
 
-TypeScript
+## Installation & Setup
 
-Vite
+To run this project locally, follow these steps:
 
-React Router
 
-Tailwind CSS
+### 1. Clone the repository
+```bash
+git clone https://github.com/maribukh/user-management-app_itransition.git
+cd user-management-app_itransition
 
-Heroicons (for icons)
-
-Backend:
-
-Node.js
-
-Express.js
-
-PostgreSQL
-
-node-postgres (pg) for database connection
-
-jsonwebtoken (JWT) for authentication
-
-bcrypt for password hashing
-
-nodemailer for sending emails
-
-🚀 Getting Started
-To run this project locally, you will need to run the frontend and backend servers separately.
-
-Prerequisites
-Node.js (v18 or later)
-
-PostgreSQL installed and running
-
-A Mailtrap account for email testing
-
-1. Backend Setup
-Navigate to the backend directory:
-
-cd backend-app 
-
-Install dependencies:
-
+cd server
 npm install
 
-Set up the database:
-
-Create a PostgreSQL database named user_management_db.
-
-Run the SQL commands from the database.sql file to create the users table and necessary types/indexes.
-
-Configure Environment Variables:
-
-Update the database connection details in server.js if they differ from the defaults.
-
-Add your Mailtrap credentials in the nodemailer transporter configuration in server.js.
-
-Run the server:
-
-npm start
-
-The backend server will be running on http://localhost:3001.
-
-2. Frontend Setup
-Navigate to the frontend directory (the root of this repository).
-
-Install dependencies:
-
+cd ../client
 npm install
-
-Run the development server:
-
 npm run dev
 
-The application will be available at http://localhost:5173.
 
-下一步 (Next Steps)
-The final step for this project is to deploy it to make it publicly accessible. The recommended services are:
-
-Backend: Render
-
-Frontend: Vercel
