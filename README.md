@@ -11,7 +11,7 @@
 
 | Component | Status | Link |
 |-----------|--------|------|
-| **Frontend** | Online | [Open App on Vercel](https://user-management-app-itransition.vercel.app/) |
+| **Frontend** | Online | [Open App on Render](https://user-management-app-itransition-1.onrender.com/) |
 | **Backend** | Online | [API on Render](https://user-management-backend-c6r6.onrender.com/) |
 
 > *Note: Since the backend is hosted on Render (Free Tier), the first request might take 30-60 seconds to wake up the server.*
